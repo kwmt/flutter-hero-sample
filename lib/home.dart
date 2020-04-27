@@ -27,19 +27,19 @@ class _HomePageState extends State<HomePage> {
           return Container(
             child: Hero(
               tag: "list$index",
-              child: _buildItem(context, index),
+              child: _buildItem(context, index, "assets/alpaca.jpg"),
             ),
           );
         });
   }
 
-  Widget _buildItem(BuildContext context, int index) {
+  Widget _buildItem(BuildContext context, int index, String image) {
     return Material(
       child: InkWell(
           child: Container(
             padding: EdgeInsets.all(16.0),
             child: Image.asset(
-              "assets/alpaca.jpg",
+              image,
               fit: BoxFit.contain,
             ),
           ),
@@ -47,7 +47,7 @@ class _HomePageState extends State<HomePage> {
             Navigator.of(context).push(MaterialPageRoute(
               fullscreenDialog: true,
               builder: (context) {
-                return DetailPage(title: "$index", tag: "list$index");
+                return DetailPage(title: "$index", tag: "list$index", image: image);
               },
             ));
           }),
@@ -58,8 +58,9 @@ class _HomePageState extends State<HomePage> {
 class DetailPage extends StatelessWidget {
   final String title;
   final String tag;
+  final String image;
 
-  DetailPage({this.title, this.tag});
+  DetailPage({this.title, this.tag, this.image});
 
   @override
   Widget build(BuildContext context) {
@@ -67,14 +68,15 @@ class DetailPage extends StatelessWidget {
         appBar: AppBar(
           title: Text(this.title),
         ),
-        body: ImageWidget(this.tag));
+        body: ImageWidget(this.tag, this.image));
   }
 }
 
 class ImageWidget extends StatelessWidget {
   final String tag;
+  final String image;
 
-  ImageWidget(this.tag);
+  ImageWidget(this.tag, this.image);
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +85,7 @@ class ImageWidget extends StatelessWidget {
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            child: Image.asset('assets/alpaca.jpg'),
+            child: Image.asset(this.image),
             onTap: () {
               Navigator.pop(context);
             },
