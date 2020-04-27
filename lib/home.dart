@@ -16,54 +16,147 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Image Viewer Sample')),
-      body: SingleChildScrollView(
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0),
-          child: Column(
-            children: [
-              _buildImage('assets/karuizawa.jpg'),
-              _spacer(16.0),
-              _buildImage('assets/alpaca.jpg'),
-              _spacer(16.0),
-              _buildImage('assets/jack-jack.jpg'),
-            ],
+      body: _buildBody(),
+    );
+  }
+
+  Widget _buildBody() {
+    return ListView.builder(
+        itemCount: 10,
+        itemBuilder: (context, index) {
+          return Container(
+            child: Hero(
+              tag: "list$index",
+              child: _buildItem(context, index),
+            ),
+          );
+        });
+  }
+
+  Widget _buildItem(BuildContext context, int index) {
+    return Material(
+      child: InkWell(
+          child: Container(
+            padding: EdgeInsets.all(16.0),
+            child: Image.asset(
+              "assets/alpaca.jpg",
+              fit: BoxFit.contain,
+            ),
+          ),
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(
+              fullscreenDialog: true,
+              builder: (context) {
+                return DetailPage(title: "$index", tag: "list$index");
+              },
+            ));
+          }),
+    );
+  }
+}
+
+class DetailPage extends StatelessWidget {
+  final String title;
+  final String tag;
+
+  DetailPage({this.title, this.tag});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text(this.title),
+        ),
+        body: ImageWidget(this.tag));
+  }
+}
+
+class ImageWidget extends StatelessWidget {
+  final String tag;
+
+  ImageWidget(this.tag);
+
+  @override
+  Widget build(BuildContext context) {
+    return Hero(
+        tag: this.tag,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            child: Image.asset('assets/alpaca.jpg'),
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
+        ));
+  }
+}
+
+class HeroAnimation extends StatelessWidget {
+  Widget build(BuildContext context) {
+//    timeDilation = 5.0; // 1.0 means normal animation speed.
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Basic Hero Animation'),
+      ),
+      body: Center(
+        child: PhotoHero(
+          photo: 'assets/alpaca.jpg',
+          width: 300.0,
+          onTap: () {
+            Navigator.of(context)
+                .push(MaterialPageRoute<void>(builder: (BuildContext context) {
+              return Scaffold(
+                appBar: AppBar(
+                  title: const Text('Flippers Page'),
+                ),
+                body: Container(
+                  // The blue background emphasizes that it's a new route.
+                  color: Colors.lightBlueAccent,
+                  padding: const EdgeInsets.all(16.0),
+                  alignment: Alignment.topLeft,
+                  child: PhotoHero(
+                    photo: 'assets/alpaca.jpg',
+                    width: 100.0,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+              );
+            }));
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class PhotoHero extends StatelessWidget {
+  const PhotoHero({Key key, this.photo, this.onTap, this.width})
+      : super(key: key);
+
+  final String photo;
+  final VoidCallback onTap;
+  final double width;
+
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      child: Hero(
+        tag: photo,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Image.asset(
+              photo,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildImage(String name) {
-    return Opacity(
-      opacity: (name == _selectedAsset) ? 0.0 : 1.0,
-      child: InkWell(
-        child: Hero(
-          tag: name,
-          child: Image.asset(name),
-        ),
-        onTap: () {
-          Navigator.of(context).push(
-            FadeInRoute(
-              widget: ImageViewerPage(name),
-              opaque: false,
-              onTransitionCompleted: () {
-                setState(() {
-                  _selectedAsset = name;
-                });
-              },
-              onTransitionDismissed: () {
-                setState(() {
-                  _selectedAsset = '';
-                });
-              },
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _spacer(double height) {
-    return Container(height: height);
   }
 }
