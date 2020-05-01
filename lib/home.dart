@@ -1,6 +1,6 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
-import 'package:herosample/fade_in_route.dart';
-import 'package:herosample/image_view.dart';
 
 class HomePage extends StatefulWidget {
   HomePage();
@@ -8,6 +8,11 @@ class HomePage extends StatefulWidget {
   @override
   _HomePageState createState() => _HomePageState();
 }
+
+const double VERTICAL_SWIPE_THRESHOLD = 200;
+const int TRANSITION_DURATION = 600;
+const int CONTAINER_REVERSE_DURATION = 200;
+const double CONTAINER_MIN_OPACITY = 0.3;
 
 class _HomePageState extends State<HomePage> {
   String _selectedAsset = '';
@@ -44,18 +49,24 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           onTap: () {
-            Navigator.of(context).push(MaterialPageRoute(
-              fullscreenDialog: true,
-              builder: (context) {
-                return DetailPage(title: "$index", tag: "list$index", image: image);
-              },
-            ));
+            Navigator.of(context).push(PageRouteBuilder<DetailPage>(
+                opaque: false,
+                fullscreenDialog: true,
+                pageBuilder: (context, animation, secondaryAnimation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: DetailPage(
+                        title: "$index", tag: "list$index", image: image),
+                  );
+                },
+                transitionDuration:
+                    const Duration(milliseconds: TRANSITION_DURATION)));
           }),
     );
   }
 }
 
-class DetailPage extends StatelessWidget {
+class DetailPage extends StatefulWidget {
   final String title;
   final String tag;
   final String image;
@@ -63,12 +74,73 @@ class DetailPage extends StatelessWidget {
   DetailPage({this.title, this.tag, this.image});
 
   @override
+  _DetailPageState createState() => _DetailPageState();
+}
+
+class _DetailPageState extends State<DetailPage> {
+  Offset beginningDragPosition = Offset.zero;
+  Offset currentDragPosition = Offset.zero;
+
+  int containerReverseDuration = 0;
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text(this.title),
+    return Container(
+      color: Colors.black.withOpacity(containerBackgroundOpacity),
+      child: Listener(
+        onPointerDown: _onPointerDown,
+        onPointerMove: _onPointerMove,
+        onPointerUp: _onPointerUp,
+        child: AnimatedContainer(
+          duration: Duration(milliseconds: containerReverseDuration),
+          transform: containerVerticalTransform,
+          child: ImageWidget(this.widget.tag, this.widget.image),
         ),
-        body: ImageWidget(this.tag, this.image));
+      ),
+    );
+  }
+
+  Matrix4 get containerVerticalTransform {
+    final Matrix4 translationTransform = Matrix4.translationValues(
+      0,
+      currentDragPosition.dy,
+      0.0,
+    );
+
+    return translationTransform;
+  }
+
+  double get containerBackgroundOpacity {
+    return max(
+        1.0 - currentDragPosition.distance * 0.003, CONTAINER_MIN_OPACITY);
+  }
+
+  void _onPointerDown(PointerDownEvent event) {
+    setState(() {
+      containerReverseDuration = 0;
+    });
+    beginningDragPosition = event.position;
+  }
+
+  void _onPointerMove(PointerMoveEvent details) {
+    setState(() {
+      currentDragPosition = Offset(
+        0,
+        details.position.dy - beginningDragPosition.dy,
+      );
+    });
+  }
+
+  void _onPointerUp(PointerUpEvent event) {
+    print(currentDragPosition.distance);
+    if (currentDragPosition.distance < VERTICAL_SWIPE_THRESHOLD) {
+      setState(() {
+        currentDragPosition = Offset.zero;
+        containerReverseDuration = CONTAINER_REVERSE_DURATION;
+      });
+    } else {
+      Navigator.pop(context);
+    }
   }
 }
 
@@ -84,81 +156,8 @@ class ImageWidget extends StatelessWidget {
         tag: this.tag,
         child: Material(
           color: Colors.transparent,
-          child: InkWell(
-            child: Image.asset(this.image),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
+          child: Image.asset(this.image),
         ));
   }
 }
 
-class HeroAnimation extends StatelessWidget {
-  Widget build(BuildContext context) {
-//    timeDilation = 5.0; // 1.0 means normal animation speed.
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Basic Hero Animation'),
-      ),
-      body: Center(
-        child: PhotoHero(
-          photo: 'assets/alpaca.jpg',
-          width: 300.0,
-          onTap: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute<void>(builder: (BuildContext context) {
-              return Scaffold(
-                appBar: AppBar(
-                  title: const Text('Flippers Page'),
-                ),
-                body: Container(
-                  // The blue background emphasizes that it's a new route.
-                  color: Colors.lightBlueAccent,
-                  padding: const EdgeInsets.all(16.0),
-                  alignment: Alignment.topLeft,
-                  child: PhotoHero(
-                    photo: 'assets/alpaca.jpg',
-                    width: 100.0,
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                ),
-              );
-            }));
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class PhotoHero extends StatelessWidget {
-  const PhotoHero({Key key, this.photo, this.onTap, this.width})
-      : super(key: key);
-
-  final String photo;
-  final VoidCallback onTap;
-  final double width;
-
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: width,
-      child: Hero(
-        tag: photo,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            child: Image.asset(
-              photo,
-              fit: BoxFit.contain,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
