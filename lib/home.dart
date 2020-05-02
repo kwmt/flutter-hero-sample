@@ -1,7 +1,6 @@
-import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:herosample/hierarchical_transition.dart';
+import 'package:hierarchical_transition_image/hierarchical_transition_image.dart';
 
 class HomePage extends StatefulWidget {
   HomePage();

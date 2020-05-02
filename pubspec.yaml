@@ -25,6 +25,11 @@ dependencies:
   cupertino_icons: ^0.1.2
   photo_view: ^0.9.2
 
+  hierarchical_transition_image:
+    git:
+      url: git://github.com/kwmt/flutter-hierarchical-transition-image.git
+      version: 0.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
